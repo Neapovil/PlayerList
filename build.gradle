@@ -1,0 +1,28 @@
+plugins {
+  id 'java-library'
+  id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+version = '1.17.1'
+group = 'com.github.neapovil.playerlist'
+compileJava.options.encoding = 'UTF-8'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(16)
+
+repositories {
+  maven { url 'https://hub.spigotmc.org/nexus/content/groups/public/' }
+  mavenCentral()
+}
+
+dependencies {
+  compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.17.1-R0.1-SNAPSHOT'
+
+  implementation group: 'com.electronwill.night-config', name:'toml', version: '3.6.0'
+}
+
+shadowJar {
+  classifier ''
+  relocate 'com.electronwill.nightconfig', 'com.github.neapovil.playerlist.nightconfig'
+}
+
+build.dependsOn shadowJar
