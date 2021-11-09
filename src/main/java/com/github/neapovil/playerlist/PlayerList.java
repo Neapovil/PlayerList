@@ -9,6 +9,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.electronwill.nightconfig.core.file.FileConfig;
 
+import net.md_5.bungee.api.ChatColor;
+
 public final class PlayerList extends JavaPlugin implements Listener
 {
     private static PlayerList instance;
@@ -44,6 +46,8 @@ public final class PlayerList extends JavaPlugin implements Listener
     @EventHandler
     public void playerJoin(PlayerJoinEvent event)
     {
-        event.getPlayer().setPlayerListHeaderFooter(this.config.get("general.header"), this.config.get("general.footer"));
+        final String header = ChatColor.translateAlternateColorCodes('&', this.config.get("general.header"));
+        final String footer = ChatColor.translateAlternateColorCodes('&', this.config.get("general.footer"));
+        event.getPlayer().setPlayerListHeaderFooter(header, footer);
     }
 }
