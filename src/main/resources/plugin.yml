@@ -4,3 +4,8 @@ version: 1.0.0
 api-version: 1.13
 author: Neapovil
 website: https://github.com/Neapovil/PlayerList
+depend:
+  - CommandAPI
+permissions:
+  playerlist.command:
+    default: op
