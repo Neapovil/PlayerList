@@ -10,17 +10,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.electronwill.nightconfig.core.file.FileConfig;
 
 import dev.jorel.commandapi.CommandAPICommand;
+import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.BooleanArgument;
 import dev.jorel.commandapi.arguments.GreedyStringArgument;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.arguments.MultiLiteralArgument;
 import net.kyori.adventure.text.Component;
-import net.md_5.bungee.api.ChatColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 
 public final class PlayerList extends JavaPlugin implements Listener
 {
     private static PlayerList instance;
     private FileConfig config;
+    private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
     @Override
     public void onEnable()
@@ -40,14 +42,31 @@ public final class PlayerList extends JavaPlugin implements Listener
         new CommandAPICommand("tablist")
                 .withPermission("playerlist.command")
                 .withArguments(new MultiLiteralArgument("header", "footer"))
-                .withArguments(new GreedyStringArgument("text"))
+                .withArguments(new GreedyStringArgument("text").replaceSuggestions(ArgumentSuggestions.strings(info -> {
+                    final String option = (String) info.previousArgs()[0];
+
+                    if (option.equals("header"))
+                    {
+                        return new String[] { this.config.get("config.header") };
+                    }
+
+                    if (option.equals("footer"))
+                    {
+                        return new String[] { this.config.get("config.footer") };
+                    }
+
+                    return new String[] {};
+                })))
                 .executes((sender, args) -> {
                     final String setting = (String) args[0];
                     final String text = (String) args[1];
 
                     this.config.set("config." + setting, text);
 
-                    sender.sendMessage("Changed " + setting + " message to: " + text);
+                    final Component component = Component.text("Changed " + setting + " message to:\n")
+                            .append(this.miniMessage.deserialize(text));
+
+                    sender.sendMessage(component);
                 })
                 .register();
 
@@ -83,9 +102,9 @@ public final class PlayerList extends JavaPlugin implements Listener
             return;
         }
 
-        final String header = ChatColor.translateAlternateColorCodes('&', this.config.get("config.header"));
-        final String footer = ChatColor.translateAlternateColorCodes('&', this.config.get("config.footer"));
+        final Component header = this.miniMessage.deserialize(this.config.get("config.header"));
+        final Component footer = this.miniMessage.deserialize(this.config.get("config.footer"));
 
-        event.getPlayer().sendPlayerListHeaderAndFooter(Component.text(header), Component.text(footer));
+        event.getPlayer().sendPlayerListHeaderAndFooter(header, footer);
     }
 }
