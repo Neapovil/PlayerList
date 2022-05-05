@@ -32,7 +32,6 @@ public final class PlayerList extends JavaPlugin implements Listener
         this.config = FileConfig.builder(new File(this.getDataFolder(), "config.json"))
                 .autoreload()
                 .autosave()
-                .sync()
                 .build();
         this.config.load();
 
@@ -48,7 +47,7 @@ public final class PlayerList extends JavaPlugin implements Listener
 
                     this.config.set("config." + setting, text);
 
-                    sender.sendMessage(setting + " changed to: " + text);
+                    sender.sendMessage("Changed " + setting + " message to: " + text);
                 })
                 .register();
 
@@ -61,7 +60,7 @@ public final class PlayerList extends JavaPlugin implements Listener
 
                     this.config.set("config.enabled", bool);
 
-                    sender.sendMessage("Custom playerlist enabled: " + bool);
+                    sender.sendMessage("Playerlist status changed to: " + bool);
                 })
                 .register();
     }
