@@ -27,9 +27,9 @@ public final class PlayerList extends JavaPlugin implements Listener
     {
         instance = this;
 
-        this.saveResource("config.toml", false);
+        this.saveResource("config.json", false);
 
-        this.config = FileConfig.builder(new File(this.getDataFolder(), "config.toml"))
+        this.config = FileConfig.builder(new File(this.getDataFolder(), "config.json"))
                 .autoreload()
                 .autosave()
                 .sync()
@@ -46,7 +46,7 @@ public final class PlayerList extends JavaPlugin implements Listener
                     final String setting = (String) args[0];
                     final String text = (String) args[1];
 
-                    this.config.set("general." + setting, text);
+                    this.config.set("config." + setting, text);
 
                     sender.sendMessage(setting + " changed to: " + text);
                 })
@@ -59,7 +59,7 @@ public final class PlayerList extends JavaPlugin implements Listener
                 .executes((sender, args) -> {
                     final boolean bool = (boolean) args[0];
 
-                    this.config.set("general.enabled", bool);
+                    this.config.set("config.enabled", bool);
 
                     sender.sendMessage("Custom playerlist enabled: " + bool);
                 })
@@ -79,13 +79,13 @@ public final class PlayerList extends JavaPlugin implements Listener
     @EventHandler
     public void playerJoin(PlayerJoinEvent event)
     {
-        if (!((boolean) this.config.get("general.enabled")))
+        if (!((boolean) this.config.get("config.enabled")))
         {
             return;
         }
 
-        final String header = ChatColor.translateAlternateColorCodes('&', this.config.get("general.header"));
-        final String footer = ChatColor.translateAlternateColorCodes('&', this.config.get("general.footer"));
+        final String header = ChatColor.translateAlternateColorCodes('&', this.config.get("config.header"));
+        final String footer = ChatColor.translateAlternateColorCodes('&', this.config.get("config.footer"));
 
         event.getPlayer().sendPlayerListHeaderAndFooter(Component.text(header), Component.text(footer));
     }
