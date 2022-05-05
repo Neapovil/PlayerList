@@ -39,7 +39,7 @@ public final class PlayerList extends JavaPlugin implements Listener
 
         this.getServer().getPluginManager().registerEvents(this, this);
 
-        new CommandAPICommand("tablist")
+        new CommandAPICommand("playerlist")
                 .withPermission("playerlist.command")
                 .withArguments(new MultiLiteralArgument("header", "footer"))
                 .withArguments(new GreedyStringArgument("text").replaceSuggestions(ArgumentSuggestions.strings(info -> {
@@ -70,7 +70,7 @@ public final class PlayerList extends JavaPlugin implements Listener
                 })
                 .register();
 
-        new CommandAPICommand("tablist")
+        new CommandAPICommand("playerlist")
                 .withPermission("playerlist.command")
                 .withArguments(new LiteralArgument("enabled"))
                 .withArguments(new BooleanArgument("bool"))
