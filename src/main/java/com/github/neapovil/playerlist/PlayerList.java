@@ -1,7 +1,6 @@
 package com.github.neapovil.playerlist;
 
-import java.io.File;
-
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -31,10 +30,11 @@ public final class PlayerList extends JavaPlugin implements Listener
 
         this.saveResource("config.json", false);
 
-        this.config = FileConfig.builder(new File(this.getDataFolder(), "config.json"))
+        this.config = FileConfig.builder(this.getDataFolder().toPath().resolve("config.json"))
                 .autoreload()
                 .autosave()
                 .build();
+
         this.config.load();
 
         this.getServer().getPluginManager().registerEvents(this, this);
@@ -67,19 +67,39 @@ public final class PlayerList extends JavaPlugin implements Listener
                             .append(this.miniMessage.deserialize(text));
 
                     sender.sendMessage(component);
+
+                    if (this.isPlayerListEnabled())
+                    {
+                        for (Player player : this.getServer().getOnlinePlayers())
+                        {
+                            this.sendPlayerList(player);
+                        }
+                    }
                 })
                 .register();
 
         new CommandAPICommand("playerlist")
                 .withPermission("playerlist.command")
                 .withArguments(new LiteralArgument("enabled"))
-                .withArguments(new BooleanArgument("bool"))
+                .withArguments(new BooleanArgument("status"))
                 .executes((sender, args) -> {
                     final boolean bool = (boolean) args[0];
 
                     this.config.set("config.enabled", bool);
 
                     sender.sendMessage("Playerlist status changed to: " + bool);
+
+                    for (Player player : this.getServer().getOnlinePlayers())
+                    {
+                        if (bool)
+                        {
+                            this.sendPlayerList(player);
+                        }
+                        else
+                        {
+                            player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+                        }
+                    }
                 })
                 .register();
     }
@@ -94,17 +114,25 @@ public final class PlayerList extends JavaPlugin implements Listener
         return instance;
     }
 
-    @EventHandler
-    public void playerJoin(PlayerJoinEvent event)
+    private boolean isPlayerListEnabled()
     {
-        if (!((boolean) this.config.get("config.enabled")))
-        {
-            return;
-        }
+        return this.config.get("config.enabled");
+    }
 
+    @EventHandler
+    private void playerJoin(PlayerJoinEvent event)
+    {
+        if (this.isPlayerListEnabled())
+        {
+            this.sendPlayerList(event.getPlayer());
+        }
+    }
+
+    private void sendPlayerList(Player player)
+    {
         final Component header = this.miniMessage.deserialize(this.config.get("config.header"));
         final Component footer = this.miniMessage.deserialize(this.config.get("config.footer"));
 
-        event.getPlayer().sendPlayerListHeaderAndFooter(header, footer);
+        player.sendPlayerListHeaderAndFooter(header, footer);
     }
 }
