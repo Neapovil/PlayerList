@@ -130,9 +130,18 @@ public final class PlayerList extends JavaPlugin implements Listener
 
     private void sendPlayerList(Player player)
     {
-        final Component header = this.miniMessage.deserialize(this.config.get("config.header"));
-        final Component footer = this.miniMessage.deserialize(this.config.get("config.footer"));
+        String header = this.config.get("config.header");
+        String footer = this.config.get("config.footer");
 
-        player.sendPlayerListHeaderAndFooter(header, footer);
+        if (this.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+        {
+            header = com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player, header);
+            footer = com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player, footer);
+        }
+
+        final Component headercomponent = this.miniMessage.deserialize(header);
+        final Component footercomponent = this.miniMessage.deserialize(footer);
+
+        player.sendPlayerListHeaderAndFooter(headercomponent, footercomponent);
     }
 }

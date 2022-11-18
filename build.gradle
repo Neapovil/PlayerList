@@ -13,6 +13,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 repositories {
   maven { url "https://repo.codemc.org/repository/maven-public/" }
   maven { url "https://jitpack.io" }
+  maven { url "https://repo.extendedclip.com/content/repositories/placeholderapi/" }
   mavenCentral()
 }
 
@@ -21,6 +22,7 @@ dependencies {
 
   compileOnly group: "dev.jorel", name: "commandapi-core", version: "8.5.1"
   compileOnly group: "net.kyori", name: "adventure-text-minimessage", version: "4.11.0"
+  compileOnly group: "me.clip", name: "placeholderapi", version: "2.11.2"
 
   implementation group: "com.electronwill.night-config", name:"json", version: "3.6.6"
 }

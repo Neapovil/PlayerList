@@ -6,6 +6,8 @@ author: Neapovil
 website: https://github.com/Neapovil/playerlist
 depend:
   - CommandAPI
+softdepend:
+  - PlaceholderAPI
 permissions:
   playerlist.command:
     default: op
