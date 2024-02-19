@@ -1,12 +1,16 @@
 package com.github.neapovil.playerlist;
 
+import java.io.IOException;
+import java.nio.file.Files;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.electronwill.nightconfig.core.file.FileConfig;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
@@ -16,12 +20,14 @@ import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.arguments.MultiLiteralArgument;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
 public final class PlayerList extends JavaPlugin implements Listener
 {
     private static PlayerList instance;
-    private FileConfig config;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private Config config;
 
     @Override
     public void onEnable()
@@ -30,45 +36,47 @@ public final class PlayerList extends JavaPlugin implements Listener
 
         this.saveResource("config.json", false);
 
-        this.config = FileConfig.builder(this.getDataFolder().toPath().resolve("config.json"))
-                .autoreload()
-                .autosave()
-                .build();
-
-        this.config.load();
+        this.load();
 
         this.getServer().getPluginManager().registerEvents(this, this);
 
         new CommandAPICommand("playerlist")
                 .withPermission("playerlist.command")
-                .withArguments(new MultiLiteralArgument("header", "footer"))
+                .withArguments(new MultiLiteralArgument("setting", "header", "footer"))
                 .withArguments(new GreedyStringArgument("text").replaceSuggestions(ArgumentSuggestions.strings(info -> {
-                    final String option = (String) info.previousArgs()[0];
+                    final String option = (String) info.previousArgs().get(0);
 
                     if (option.equals("header"))
                     {
-                        return new String[] { this.config.get("config.header") };
+                        return new String[] { this.config.header };
                     }
 
                     if (option.equals("footer"))
                     {
-                        return new String[] { this.config.get("config.footer") };
+                        return new String[] { this.config.footer };
                     }
 
                     return new String[] {};
                 })))
                 .executes((sender, args) -> {
-                    final String setting = (String) args[0];
-                    final String text = (String) args[1];
+                    final String setting = (String) args.get(0);
+                    final String text = (String) args.get(1);
 
-                    this.config.set("config." + setting, text);
+                    if (setting.equals("header"))
+                    {
+                        this.config.header = text;
+                    }
 
-                    final Component component = Component.text("Changed " + setting + " message to:\n")
-                            .append(this.miniMessage.deserialize(text));
+                    if (setting.equals("footer"))
+                    {
+                        this.config.footer = text;
+                    }
 
-                    sender.sendMessage(component);
+                    this.save();
 
-                    if (this.isPlayerListEnabled())
+                    sender.sendRichMessage("Changed " + setting + " message to:\n" + text);
+
+                    if (this.config.enabled)
                     {
                         for (Player player : this.getServer().getOnlinePlayers())
                         {
@@ -83,9 +91,10 @@ public final class PlayerList extends JavaPlugin implements Listener
                 .withArguments(new LiteralArgument("enabled"))
                 .withArguments(new BooleanArgument("status"))
                 .executes((sender, args) -> {
-                    final boolean bool = (boolean) args[0];
+                    final boolean bool = (boolean) args.get(0);
 
-                    this.config.set("config.enabled", bool);
+                    this.config.enabled = bool;
+                    this.save();
 
                     sender.sendMessage("Playerlist status changed to: " + bool);
 
@@ -109,20 +118,15 @@ public final class PlayerList extends JavaPlugin implements Listener
     {
     }
 
-    public static PlayerList getInstance()
+    public static PlayerList instance()
     {
         return instance;
-    }
-
-    private boolean isPlayerListEnabled()
-    {
-        return this.config.get("config.enabled");
     }
 
     @EventHandler
     private void playerJoin(PlayerJoinEvent event)
     {
-        if (this.isPlayerListEnabled())
+        if (this.config.enabled)
         {
             this.sendPlayerList(event.getPlayer());
         }
@@ -130,18 +134,50 @@ public final class PlayerList extends JavaPlugin implements Listener
 
     private void sendPlayerList(Player player)
     {
-        String header = this.config.get("config.header");
-        String footer = this.config.get("config.footer");
+        String header = this.config.header;
+        String footer = this.config.footer;
 
-        if (this.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
-        {
-            header = com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player, header);
-            footer = com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player, footer);
-        }
+        final boolean papi = this.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null;
 
-        final Component headercomponent = this.miniMessage.deserialize(header);
-        final Component footercomponent = this.miniMessage.deserialize(footer);
+        Component headercomponent = this.miniMessage.deserialize(header,
+                papi ? com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
+        Component footercomponent = this.miniMessage.deserialize(footer,
+                papi ? com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
 
         player.sendPlayerListHeaderAndFooter(headercomponent, footercomponent);
+    }
+
+    private void save()
+    {
+        final String s = gson.toJson(this.config);
+
+        try
+        {
+            Files.write(this.getDataFolder().toPath().resolve("config.json"), s.getBytes());
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private void load()
+    {
+        try
+        {
+            final String s = Files.readString(this.getDataFolder().toPath().resolve("config.json"));
+            this.config = gson.fromJson(s, Config.class);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    class Config
+    {
+        public boolean enabled;
+        public String header;
+        public String footer;
     }
 }

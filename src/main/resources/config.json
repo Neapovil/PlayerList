@@ -1,7 +1,5 @@
 {
-  "config": {
-    "enabled": true,
-    "header": "<aqua>Welcome to <dark_aqua><italic>Neapovil!<newline>",
-    "footer": "<newline><aqua>Long live the King!"
-  }
+  "enabled": true,
+  "header": "<aqua>Welcome to <dark_aqua><italic>Neapovil!<newline>",
+  "footer": "<newline><aqua>Long live the King!"
 }
