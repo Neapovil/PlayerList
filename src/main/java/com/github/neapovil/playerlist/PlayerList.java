@@ -36,7 +36,14 @@ public final class PlayerList extends JavaPlugin implements Listener
 
         this.saveResource("config.json", false);
 
-        this.load();
+        try
+        {
+            this.load();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
 
         this.getServer().getPluginManager().registerEvents(this, this);
 
@@ -59,8 +66,8 @@ public final class PlayerList extends JavaPlugin implements Listener
                     return new String[] {};
                 })))
                 .executes((sender, args) -> {
-                    final String setting = (String) args.get(0);
-                    final String text = (String) args.get(1);
+                    final String setting = (String) args.get("setting");
+                    final String text = (String) args.get("text");
 
                     if (setting.equals("header"))
                     {
@@ -72,16 +79,24 @@ public final class PlayerList extends JavaPlugin implements Listener
                         this.config.footer = text;
                     }
 
-                    this.save();
-
-                    sender.sendRichMessage("Changed " + setting + " message to:\n" + text);
-
-                    if (this.config.enabled)
+                    try
                     {
-                        for (Player player : this.getServer().getOnlinePlayers())
+                        this.save();
+
+                        sender.sendRichMessage("Changed " + setting + " message to:\n" + text);
+
+                        if (this.config.enabled)
                         {
-                            this.sendPlayerList(player);
+                            for (Player player : this.getServer().getOnlinePlayers())
+                            {
+                                this.sendPlayerList(player);
+                            }
                         }
+                    }
+                    catch (IOException e)
+                    {
+                        sender.sendRichMessage("Unable to edit text");
+                        this.getLogger().severe(e.getMessage());
                     }
                 })
                 .register();
@@ -89,25 +104,34 @@ public final class PlayerList extends JavaPlugin implements Listener
         new CommandAPICommand("playerlist")
                 .withPermission("playerlist.command")
                 .withArguments(new LiteralArgument("enabled"))
-                .withArguments(new BooleanArgument("status"))
+                .withArguments(new BooleanArgument("bool"))
                 .executes((sender, args) -> {
-                    final boolean bool = (boolean) args.get(0);
+                    final boolean bool = (boolean) args.get("bool");
 
                     this.config.enabled = bool;
-                    this.save();
 
-                    sender.sendMessage("Playerlist status changed to: " + bool);
-
-                    for (Player player : this.getServer().getOnlinePlayers())
+                    try
                     {
-                        if (bool)
+                        this.save();
+
+                        sender.sendMessage("Playerlist status changed to: " + bool);
+
+                        for (Player player : this.getServer().getOnlinePlayers())
                         {
-                            this.sendPlayerList(player);
+                            if (bool)
+                            {
+                                this.sendPlayerList(player);
+                            }
+                            else
+                            {
+                                player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+                            }
                         }
-                        else
-                        {
-                            player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
-                        }
+                    }
+                    catch (IOException e)
+                    {
+                        sender.sendRichMessage("Unable to change status");
+                        this.getLogger().severe(e.getMessage());
                     }
                 })
                 .register();
@@ -139,39 +163,24 @@ public final class PlayerList extends JavaPlugin implements Listener
 
         final boolean papi = this.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null;
 
-        Component headercomponent = this.miniMessage.deserialize(header,
+        final Component headercomponent = this.miniMessage.deserialize(header,
                 papi ? com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
-        Component footercomponent = this.miniMessage.deserialize(footer,
+        final Component footercomponent = this.miniMessage.deserialize(footer,
                 papi ? com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
 
         player.sendPlayerListHeaderAndFooter(headercomponent, footercomponent);
     }
 
-    private void save()
+    private void save() throws IOException
     {
-        final String s = gson.toJson(this.config);
-
-        try
-        {
-            Files.write(this.getDataFolder().toPath().resolve("config.json"), s.getBytes());
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
+        final String string = gson.toJson(this.config);
+        Files.write(this.getDataFolder().toPath().resolve("config.json"), string.getBytes());
     }
 
-    private void load()
+    private void load() throws IOException
     {
-        try
-        {
-            final String s = Files.readString(this.getDataFolder().toPath().resolve("config.json"));
-            this.config = gson.fromJson(s, Config.class);
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
+        final String string = Files.readString(this.getDataFolder().toPath().resolve("config.json"));
+        this.config = gson.fromJson(string, Config.class);
     }
 
     class Config
