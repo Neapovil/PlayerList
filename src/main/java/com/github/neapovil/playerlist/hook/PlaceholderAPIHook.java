@@ -1,4 +1,4 @@
-package com.github.neapovil.playerlist;
+package com.github.neapovil.playerlist.hook;
 
 import org.bukkit.entity.Player;
 

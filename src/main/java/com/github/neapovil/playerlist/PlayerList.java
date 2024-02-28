@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.github.neapovil.playerlist.listener.Listener;
+import com.github.neapovil.playerlist.resource.Config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -22,7 +21,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
-public final class PlayerList extends JavaPlugin implements Listener
+public final class PlayerList extends JavaPlugin
 {
     private static PlayerList instance;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
@@ -45,7 +44,7 @@ public final class PlayerList extends JavaPlugin implements Listener
             e.printStackTrace();
         }
 
-        this.getServer().getPluginManager().registerEvents(this, this);
+        this.getServer().getPluginManager().registerEvents(new Listener(), this);
 
         new CommandAPICommand("playerlist")
                 .withPermission("playerlist.command")
@@ -147,26 +146,22 @@ public final class PlayerList extends JavaPlugin implements Listener
         return instance;
     }
 
-    @EventHandler
-    private void playerJoin(PlayerJoinEvent event)
+    public Config config()
     {
-        if (this.config.enabled)
-        {
-            this.sendPlayerList(event.getPlayer());
-        }
+        return this.config;
     }
 
-    private void sendPlayerList(Player player)
+    public void sendPlayerList(Player player)
     {
-        String header = this.config.header;
-        String footer = this.config.footer;
+        final String header = this.config.header;
+        final String footer = this.config.footer;
 
         final boolean papi = this.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null;
 
         final Component headercomponent = this.miniMessage.deserialize(header,
-                papi ? com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
+                papi ? com.github.neapovil.playerlist.hook.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
         final Component footercomponent = this.miniMessage.deserialize(footer,
-                papi ? com.github.neapovil.playerlist.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
+                papi ? com.github.neapovil.playerlist.hook.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
 
         player.sendPlayerListHeaderAndFooter(headercomponent, footercomponent);
     }
@@ -181,12 +176,5 @@ public final class PlayerList extends JavaPlugin implements Listener
     {
         final String string = Files.readString(this.getDataFolder().toPath().resolve("config.json"));
         this.config = gson.fromJson(string, Config.class);
-    }
-
-    class Config
-    {
-        public boolean enabled;
-        public String header;
-        public String footer;
     }
 }
