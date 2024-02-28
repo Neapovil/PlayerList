@@ -95,7 +95,7 @@ public final class PlayerList extends JavaPlugin implements Listener
                     }
                     catch (IOException e)
                     {
-                        sender.sendRichMessage("Unable to edit text");
+                        sender.sendRichMessage("<red>Unable to edit text");
                         this.getLogger().severe(e.getMessage());
                     }
                 })
@@ -116,7 +116,7 @@ public final class PlayerList extends JavaPlugin implements Listener
 
                         sender.sendMessage("Playerlist status changed to: " + bool);
 
-                        for (Player player : this.getServer().getOnlinePlayers())
+                        for (Player player : this.getServer().getOnlinePlayers().toArray(Player[]::new))
                         {
                             if (bool)
                             {
@@ -130,7 +130,7 @@ public final class PlayerList extends JavaPlugin implements Listener
                     }
                     catch (IOException e)
                     {
-                        sender.sendRichMessage("Unable to change status");
+                        sender.sendRichMessage("<red>Unable to change status");
                         this.getLogger().severe(e.getMessage());
                     }
                 })
