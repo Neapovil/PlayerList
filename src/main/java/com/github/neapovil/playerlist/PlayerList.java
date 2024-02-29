@@ -134,6 +134,34 @@ public final class PlayerList extends JavaPlugin
                     }
                 })
                 .register();
+
+        new CommandAPICommand("playerlist")
+                .withPermission("playerlist.command")
+                .withArguments(new LiteralArgument("hidePlayers"))
+                .withArguments(new BooleanArgument("bool"))
+                .executes((sender, args) -> {
+                    final boolean bool = (boolean) args.get("bool");
+
+                    this.config.hidePlayers = bool;
+
+                    try
+                    {
+                        this.save();
+
+                        sender.sendMessage("Hide players status changed to: " + bool);
+
+                        for (Player i : this.getServer().getOnlinePlayers().toArray(Player[]::new))
+                        {
+                            this.hidePlayers(i, bool);
+                        }
+                    }
+                    catch (IOException e)
+                    {
+                        sender.sendRichMessage("<red>Unable to save status");
+                        this.getLogger().severe(e.getMessage());
+                    }
+                })
+                .register();
     }
 
     @Override
@@ -164,6 +192,41 @@ public final class PlayerList extends JavaPlugin
                 papi ? com.github.neapovil.playerlist.hook.PlaceholderAPIHook.applyPlaceholders(player) : TagResolver.standard());
 
         player.sendPlayerListHeaderAndFooter(headercomponent, footercomponent);
+    }
+
+    public void hidePlayers(Player player, boolean hide)
+    {
+        if (player.hasPermission("playerlist.viewHiddenPlayers"))
+        {
+            return;
+        }
+
+        for (Player i : this.getServer().getOnlinePlayers().toArray(Player[]::new))
+        {
+            if (!player.isOnline())
+            {
+                break;
+            }
+
+            if (i.getUniqueId().equals(player.getUniqueId()))
+            {
+                continue;
+            }
+
+            if (!i.isOnline())
+            {
+                continue;
+            }
+
+            if (hide)
+            {
+                player.hidePlayer(this, i);
+            }
+            else
+            {
+                player.showPlayer(this, i);
+            }
+        }
     }
 
     private void save() throws IOException

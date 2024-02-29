@@ -5,4 +5,5 @@ public final class Config
     public boolean enabled;
     public String header;
     public String footer;
+    public boolean hidePlayers;
 }

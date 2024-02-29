@@ -11,3 +11,5 @@ softdepend:
 permissions:
   playerlist.command:
     default: op
+  playerlist.viewHiddenPlayers:
+    default: op
