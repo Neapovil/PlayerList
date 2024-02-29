@@ -35,7 +35,7 @@ public final class Listener implements org.bukkit.event.Listener
 
             plugin.getServer().broadcast(component, "playerlist.viewHiddenPlayers");
 
-            plugin.getServer().getScheduler().runTask(plugin, () -> plugin.hidePlayers(player, true));
+            plugin.hidePlayers(player, true);
 
             for (Player i : plugin.getServer().getOnlinePlayers().toArray(Player[]::new))
             {
