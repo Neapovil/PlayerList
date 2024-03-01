@@ -8,6 +8,7 @@ depend:
   - CommandAPI
 softdepend:
   - PlaceholderAPI
+  - Latency
 permissions:
   playerlist.command:
     default: op

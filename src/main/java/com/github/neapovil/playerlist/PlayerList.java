@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.github.neapovil.playerlist.listener.Listener;
 import com.github.neapovil.playerlist.resource.Config;
+import com.github.neapovil.playerlist.runnable.LatencyRunnable;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -32,6 +33,8 @@ public final class PlayerList extends JavaPlugin
     public void onEnable()
     {
         instance = this;
+
+        new LatencyRunnable().runTaskTimer(this, 0, 20);
 
         this.saveResource("config.json", false);
 
