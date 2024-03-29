@@ -5,7 +5,7 @@ plugins {
 }
 
 version = "1.19.4"
-group = "com.github.neapovil.playerlist"
+group = "com.github.neapovil"
 
 compileJava.options.encoding = "UTF-8"
 compileJava.options.release = 17

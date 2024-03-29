@@ -15,11 +15,6 @@ public final class LatencyRunnable extends BukkitRunnable
     @Override
     public void run()
     {
-        if (plugin.getServer().getPluginManager().getPlugin("Latency") == null)
-        {
-            return;
-        }
-
         for (Player i : plugin.getServer().getOnlinePlayers().toArray(Player[]::new))
         {
             final int ping = ((CraftPlayer) i).getPing();

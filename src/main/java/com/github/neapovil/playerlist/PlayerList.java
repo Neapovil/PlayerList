@@ -34,8 +34,6 @@ public final class PlayerList extends JavaPlugin
     {
         instance = this;
 
-        new LatencyRunnable().runTaskTimer(this, 0, 20);
-
         this.saveResource("config.json", false);
 
         try
@@ -45,6 +43,11 @@ public final class PlayerList extends JavaPlugin
         catch (IOException e)
         {
             e.printStackTrace();
+        }
+
+        if (this.getServer().getPluginManager().getPlugin("Latency") != null)
+        {
+            new LatencyRunnable().runTaskTimer(this, 0, 20);
         }
 
         this.getServer().getPluginManager().registerEvents(new Listener(), this);
