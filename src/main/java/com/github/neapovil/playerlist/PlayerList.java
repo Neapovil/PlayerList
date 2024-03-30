@@ -34,8 +34,6 @@ public final class PlayerList extends JavaPlugin
     {
         instance = this;
 
-        this.saveResource("config.json", false);
-
         try
         {
             this.load();
@@ -48,6 +46,11 @@ public final class PlayerList extends JavaPlugin
         if (this.getServer().getPluginManager().getPlugin("Latency") != null)
         {
             new LatencyRunnable().runTaskTimer(this, 0, 20);
+        }
+
+        if (this.getServer().getPluginManager().getPlugin("Permissions") != null)
+        {
+            this.getServer().getPluginManager().registerEvents(new com.github.neapovil.playerlist.hook.PermissionsHook(), this);
         }
 
         this.getServer().getPluginManager().registerEvents(new Listener(), this);
@@ -243,6 +246,7 @@ public final class PlayerList extends JavaPlugin
 
     private void load() throws IOException
     {
+        this.saveResource("config.json", false);
         final String string = Files.readString(this.getDataFolder().toPath().resolve("config.json"));
         this.config = gson.fromJson(string, Config.class);
     }
