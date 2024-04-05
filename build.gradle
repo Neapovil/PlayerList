@@ -24,6 +24,7 @@ dependencies {
   compileOnly group: "me.clip", name: "placeholderapi", version: "2.11.5"
 
   compileOnly fileTree(dir: "../permissions/build/libs", include: "*.jar")
+  compileOnly fileTree(dir: "../permissions-yaml/build/libs", include: "*.jar")
 }
 
 tasks {

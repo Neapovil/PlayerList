@@ -53,6 +53,11 @@ public final class PlayerList extends JavaPlugin
             this.getServer().getPluginManager().registerEvents(new com.github.neapovil.playerlist.hook.PermissionsHook(), this);
         }
 
+        if (this.getServer().getPluginManager().getPlugin("PermissionsYaml") != null)
+        {
+            this.getServer().getPluginManager().registerEvents(new com.github.neapovil.playerlist.hook.PermissionsYamlHook(), this);
+        }
+
         this.getServer().getPluginManager().registerEvents(new Listener(), this);
 
         new CommandAPICommand("playerlist")
