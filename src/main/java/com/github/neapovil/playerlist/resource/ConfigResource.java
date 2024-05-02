@@ -1,6 +1,6 @@
 package com.github.neapovil.playerlist.resource;
 
-public final class Config
+public final class ConfigResource
 {
     public boolean enabled;
     public String header;

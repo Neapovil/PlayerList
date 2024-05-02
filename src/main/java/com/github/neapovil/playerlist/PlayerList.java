@@ -1,13 +1,14 @@
 package com.github.neapovil.playerlist;
 
-import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.github.neapovil.core.Core;
 import com.github.neapovil.playerlist.listener.Listener;
-import com.github.neapovil.playerlist.resource.Config;
+import com.github.neapovil.playerlist.resource.ConfigResource;
 import com.github.neapovil.playerlist.runnable.LatencyRunnable;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,6 +19,7 @@ import dev.jorel.commandapi.arguments.BooleanArgument;
 import dev.jorel.commandapi.arguments.GreedyStringArgument;
 import dev.jorel.commandapi.arguments.LiteralArgument;
 import dev.jorel.commandapi.arguments.MultiLiteralArgument;
+import io.papermc.paper.util.MCUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
@@ -27,21 +29,15 @@ public final class PlayerList extends JavaPlugin
     private static PlayerList instance;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private Config config;
+    private ConfigResource configResource;
+    public final Path configPath = this.getDataFolder().toPath().resolve("config.json");
 
     @Override
     public void onEnable()
     {
         instance = this;
 
-        try
-        {
-            this.load();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
+        this.load();
 
         if (this.getServer().getPluginManager().getPlugin("Latency") != null)
         {
@@ -68,12 +64,12 @@ public final class PlayerList extends JavaPlugin
 
                     if (option.equals("header"))
                     {
-                        return new String[] { this.config.header };
+                        return new String[] { this.configResource.header };
                     }
 
                     if (option.equals("footer"))
                     {
-                        return new String[] { this.config.footer };
+                        return new String[] { this.configResource.footer };
                     }
 
                     return new String[] {};
@@ -84,33 +80,28 @@ public final class PlayerList extends JavaPlugin
 
                     if (setting.equals("header"))
                     {
-                        this.config.header = text;
+                        this.configResource.header = text;
                     }
 
                     if (setting.equals("footer"))
                     {
-                        this.config.footer = text;
+                        this.configResource.footer = text;
                     }
 
-                    try
-                    {
-                        this.save();
-
-                        sender.sendRichMessage("Changed " + setting + " message to:\n" + text);
-
-                        if (this.config.enabled)
+                    this.save().whenCompleteAsync((result, ex) -> {
+                        if (ex == null)
                         {
-                            for (Player player : this.getServer().getOnlinePlayers())
+                            sender.sendRichMessage("Changed " + setting + " message to:\n" + text);
+
+                            if (this.configResource.enabled)
                             {
-                                this.sendPlayerList(player);
+                                for (Player player : this.getServer().getOnlinePlayers())
+                                {
+                                    this.sendPlayerList(player);
+                                }
                             }
                         }
-                    }
-                    catch (IOException e)
-                    {
-                        sender.sendRichMessage("<red>Unable to edit text");
-                        this.getLogger().severe(e.getMessage());
-                    }
+                    }, MCUtil.MAIN_EXECUTOR);
                 })
                 .register();
 
@@ -121,31 +112,26 @@ public final class PlayerList extends JavaPlugin
                 .executes((sender, args) -> {
                     final boolean bool = (boolean) args.get("bool");
 
-                    this.config.enabled = bool;
+                    this.configResource.enabled = bool;
 
-                    try
-                    {
-                        this.save();
-
-                        sender.sendMessage("Playerlist status changed to: " + bool);
-
-                        for (Player player : this.getServer().getOnlinePlayers().toArray(Player[]::new))
+                    this.save().whenCompleteAsync((result, ex) -> {
+                        if (ex == null)
                         {
-                            if (bool)
+                            sender.sendMessage("Playerlist status changed to: " + bool);
+
+                            for (Player player : this.getServer().getOnlinePlayers())
                             {
-                                this.sendPlayerList(player);
-                            }
-                            else
-                            {
-                                player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+                                if (bool)
+                                {
+                                    this.sendPlayerList(player);
+                                }
+                                else
+                                {
+                                    player.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
+                                }
                             }
                         }
-                    }
-                    catch (IOException e)
-                    {
-                        sender.sendRichMessage("<red>Unable to change status");
-                        this.getLogger().severe(e.getMessage());
-                    }
+                    }, MCUtil.MAIN_EXECUTOR);
                 })
                 .register();
 
@@ -156,24 +142,19 @@ public final class PlayerList extends JavaPlugin
                 .executes((sender, args) -> {
                     final boolean bool = (boolean) args.get("bool");
 
-                    this.config.hidePlayers = bool;
+                    this.configResource.hidePlayers = bool;
 
-                    try
-                    {
-                        this.save();
-
-                        sender.sendMessage("Hide players status changed to: " + bool);
-
-                        for (Player i : this.getServer().getOnlinePlayers().toArray(Player[]::new))
+                    this.save().whenCompleteAsync((result, ex) -> {
+                        if (ex == null)
                         {
-                            this.hidePlayers(i, bool);
+                            sender.sendMessage("Hide players status changed to: " + bool);
+
+                            for (Player i : this.getServer().getOnlinePlayers())
+                            {
+                                this.hidePlayers(i, bool);
+                            }
                         }
-                    }
-                    catch (IOException e)
-                    {
-                        sender.sendRichMessage("<red>Unable to save status");
-                        this.getLogger().severe(e.getMessage());
-                    }
+                    }, MCUtil.MAIN_EXECUTOR);
                 })
                 .register();
     }
@@ -188,15 +169,15 @@ public final class PlayerList extends JavaPlugin
         return instance;
     }
 
-    public Config config()
+    public ConfigResource config()
     {
-        return this.config;
+        return this.configResource;
     }
 
     public void sendPlayerList(Player player)
     {
-        final String header = this.config.header;
-        final String footer = this.config.footer;
+        final String header = this.configResource.header;
+        final String footer = this.configResource.footer;
 
         final boolean papi = this.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null;
 
@@ -243,16 +224,21 @@ public final class PlayerList extends JavaPlugin
         }
     }
 
-    private void save() throws IOException
+    private CompletableFuture<String> load()
     {
-        final String string = gson.toJson(this.config);
-        Files.write(this.getDataFolder().toPath().resolve("config.json"), string.getBytes());
+        final Core core = Core.instance();
+        return core.loadResource(this, this.configPath).whenCompleteAsync((result, ex) -> {
+            if (result != null)
+            {
+                this.configResource = this.gson.fromJson(result, ConfigResource.class);
+            }
+        }, MCUtil.MAIN_EXECUTOR);
     }
 
-    private void load() throws IOException
+    private CompletableFuture<Void> save()
     {
-        this.saveResource("config.json", false);
-        final String string = Files.readString(this.getDataFolder().toPath().resolve("config.json"));
-        this.config = gson.fromJson(string, Config.class);
+        final Core core = Core.instance();
+        final String string = gson.toJson(this.configResource);
+        return core.saveResource(this.configPath, string);
     }
 }

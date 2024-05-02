@@ -6,6 +6,7 @@ author: Neapovil
 website: https://github.com/Neapovil/playerlist
 depend:
   - CommandAPI
+  - Core
 softdepend:
   - PlaceholderAPI
   - Latency

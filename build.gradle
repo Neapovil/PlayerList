@@ -25,6 +25,7 @@ dependencies {
 
   compileOnly fileTree(dir: "../permissions/build/libs", include: "*.jar")
   compileOnly fileTree(dir: "../permissions-yaml/build/libs", include: "*.jar")
+  compileOnly fileTree(dir: "../core/build/libs", include: "*.jar")
 }
 
 tasks {
